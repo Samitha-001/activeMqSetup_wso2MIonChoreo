@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="EnrichTargetSequence" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log category="INFO" level="custom">
+        <property name="INFO" value="***************Inside the enriched target sequence************"/>
+        <property name="MESSAGE_BODY" expression="get-property('originalPayload')"/>
+    </log>
+</sequence>

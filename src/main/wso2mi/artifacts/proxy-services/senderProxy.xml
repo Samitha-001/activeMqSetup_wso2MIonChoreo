@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<proxy name="senderProxy" startOnLoad="true" transports="http https" xmlns="http://ws.apache.org/ns/synapse">
+    <target>
+        <inSequence>
+
+            <property name="OUT_ONLY" value="true"/>
+            <property name="FORCE_SC_ACCEPTED" value="true" scope="axis2"/>
+
+            <log level="full">
+                <property name="Received" value="************Incoming Message to JMS Proxy**********"/>
+            </log>
+
+            <foreach expression="$body/atom:feed/atom:entry" id="FeedSplit" xmlns:atom="http://www.w3.org/2005/Atom">
+        <sequence>
+            <log level="custom">
+                <property name="CorrelationID" expression="get-property('CorrelationID')"/>
+                <property expression="fn:concat('Storing raw message in HCM_AtomFeeds_MQ for : ',$ctx:feedType ,' , UUID ',$body/atom:entry/atom:id/text())" name="LOG-ATOMFEED-READER"/>
+            </log>
+            <property expression="$body/atom:entry/atom:updated/text()" name="updatedTimeBeforePushMQ" scope="default" type="STRING"/>
+            <payloadFactory media-type="xml">
+                <format>
+                    <hcmData xmlns="http://www.w3.org/2005/Atom">
+                        <event>$1</event>
+			        					$2			        					
+			        	    </hcmData>
+                </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:feedType"/>
+                    <arg evaluator="xml" expression="$body/atom:entry"/>
+                </args>
+            </payloadFactory>
+            <property expression="$ctx:updatedTimeBeforePushMQ" name="updatedTime" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="CorrelationID" expression="get-property('CorrelationID')"/>
+                <property expression="fn:concat(' Last updatedTime of entry added to HCM_AtomFeeds_MQ : ',$ctx:updatedTime ,' for  FeedType ',$ctx:feedType)" name="LOG-ATOMFEED-READER"/>
+            </log>
+            <store messageStore="JMSMessageStore"/>
+        </sequence>
+    </foreach>
+
+
+            <!-- <property name="originalPayload" expression="get-property('Payload')" scope="default"/>
+            <store messageStore="JMSMessageStore"/>
+            <log level="custom">
+                <property name="Received" value="************LOG After the Called JMS Message Store**************"/>
+            </log> -->
+
+
+
+        </inSequence>
+        <outSequence>
+            <log level="full">
+                <property name="Response" value="Outgoing Message from JMS Proxy"/>
+            </log>
+            <send/>
+        </outSequence>
+        <faultSequence/>
+    </target>
+</proxy>
